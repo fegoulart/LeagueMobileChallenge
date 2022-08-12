@@ -6,109 +6,26 @@
 //
 
 import XCTest
+import PostLoader
 
-public protocol HTTPClientTask {
-    func cancel()
-}
-
-public protocol HTTPClient {
-    typealias Result = Swift.Result<(Data, HTTPURLResponse), Error>
-
-    /// The completion handler can be invoked in any thread.
-    /// Clients are responsible to dispatch to appropriate threads, if needed.
-    func get(
-        from url: URL,
-        parameters: [String: String],
-        headers: [String: String],
-        completion: @escaping (Result) -> Void
-    )
-}
-
-public class URLSessionHTTPClient: HTTPClient {
-
-    private let session: URLSession
-
-    public init(session: URLSession = .shared) {
-        self.session = session
-    }
-
-    private struct UnexpectedValuesRepresentation: Error {}
-    public struct CouldNotInitializeURLRequest: Error {}
-
-    private struct URLSessionTaskWrapper: HTTPClientTask {
-        let wrapped: URLSessionTask
-
-        func cancel() {
-            wrapped.cancel()
-        }
-    }
-
-    public func get(
-        from url: URL,
-        parameters: [String: String] = [:],
-        headers: [String: String] = [:],
-        completion: @escaping (HTTPClient.Result) -> Void
-    ) {
-
-        guard
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
-            completion(Result {
-                throw CouldNotInitializeURLRequest()
-            })
-            return
-        }
-
-        if !parameters.isEmpty {
-            components.queryItems = parameters.map { (key, value) in
-                URLQueryItem(name: key, value: value)
-            }
-            let percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-            components.percentEncodedQuery = percentEncodedQuery
-        }
-
-        guard let componentsURL = components.url else {
-            completion(Result {
-                throw CouldNotInitializeURLRequest()
-            })
-            return
-        }
-
-        var request = URLRequest(url: componentsURL)
-
-        for header in headers {
-            request.setValue(header.value, forHTTPHeaderField: header.key)
-        }
-
-        session.dataTask(with: request) { data, response, error in
-            completion(Result {
-                if let error = error {
-                    throw error
-                } else if let data = data, let response = response as? HTTPURLResponse {
-                    return (data, response)
-                } else {
-                    throw UnexpectedValuesRepresentation()
-                }
-            })
-        }.resume()
-    }
-}
-
-class URLSessionHTTPClientTests: XCTestCase {
+final class URLSessionHTTPClientTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
 
-        URLProtocolStub.startInterceptingRequests()
     }
 
     override func tearDown() {
         super.tearDown()
 
-        URLProtocolStub.stopInterceptingRequests()
+        URLProtocolStub.removeStub()
     }
 
     func test_getFromURL_performsGETRequestWithURL() {
         let url = anyURL()
+
+        // swiftlint:disable:next force_try
+        let urlRequest = try! URLSessionHTTPClient.request(url: anyURL())
         let exp = expectation(description: "Wait for request")
 
         URLProtocolStub.observeRequests { request in
@@ -117,8 +34,7 @@ class URLSessionHTTPClientTests: XCTestCase {
             exp.fulfill()
         }
 
-        makeSUT().get(from: url) { _ in }
-
+        makeSUT().get(from: urlRequest) { _ in }
         wait(for: [exp], timeout: 1.0)
     }
 
@@ -128,6 +44,8 @@ class URLSessionHTTPClientTests: XCTestCase {
         let parameters = ["user": "1"]
         let headers = ["x-access-token": "872C86119EBD18178526C0A687DFE495"]
         let stringUrl: String? = "\(anyURL())?user=1"
+        // swiftlint:disable:next force_try
+        let urlRequest = try! URLSessionHTTPClient.request(url: url, parameters: parameters, headers: headers)
 
         URLProtocolStub.observeRequests { request in
             XCTAssertEqual(request.httpMethod, "GET")
@@ -136,7 +54,7 @@ class URLSessionHTTPClientTests: XCTestCase {
             exp.fulfill()
         }
 
-        makeSUT().get(from: url, parameters: parameters, headers: headers) { _ in }
+        makeSUT().get(from: urlRequest) { _ in }
 
         wait(for: [exp], timeout: 1.0)
     }
@@ -149,22 +67,120 @@ class URLSessionHTTPClientTests: XCTestCase {
         XCTAssertEqual((receivedError as NSError?)?.domain, requestError.domain)
     }
 
-    func test_getFromURL_invalidURL() {
-        let sut = makeSUT()
-        let exp = expectation(description: "Wait for completion")
-
-        sut.get(from: anyURL()) { result in
-            guard case .failure = result else {
-                return XCTFail("Expected to be a failure but got a success with \(result)")
-            }
-            exp.fulfill()
-        }
-
-        wait(for: [exp], timeout: 1.0)
-
+    // swiftlint:disable:next function_body_length
+    func test_getFromURL_failsOnAllInvalidRepresentationCases() {
+        XCTAssertNotNil(resultErrorFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: nil,
+            error: nil)
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: nonHTTPURLResponse(),
+            error: nil)
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: anyData(),
+            parameters: nil,
+            headers: nil,
+            response: nil, error: nil)
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: anyData(),
+            parameters: nil,
+            headers: nil,
+            response: nil,
+            error: anyNSError())
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: nonHTTPURLResponse(),
+            error: anyNSError())
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: anyHTTPURLResponse(),
+            error: anyNSError())
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: anyData(),
+            parameters: nil,
+            headers: nil,
+            response: nonHTTPURLResponse(),
+            error: anyNSError())
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: anyData(),
+            parameters: nil,
+            headers: nil,
+            response: anyHTTPURLResponse(),
+            error: anyNSError())
+        )
+        XCTAssertNotNil(resultErrorFor(
+            data: anyData(),
+            parameters: nil,
+            headers: nil,
+            response: nonHTTPURLResponse(),
+            error: nil)
+        )
     }
 
-    // MARK: - Helpers
+    func test_cancelGetFromURLTask_cancelsURLRequest() {
+
+        let receivedError = resultErrorFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: nil,
+            error: nil) {
+                $0?.cancel()
+            } as NSError?
+
+        XCTAssertEqual(receivedError?.code, URLError.cancelled.rawValue)
+    }
+
+    func test_getFromURL_succeedsOnHTTPURLResponseWithData() {
+        let data = anyData()
+        let response = anyHTTPURLResponse()
+
+        let receivedValues = resultValuesFor(
+            data: data,
+            parameters: nil,
+            headers: nil,
+            response: response,
+            error: nil
+        )
+
+        XCTAssertEqual(receivedValues?.data, data)
+        XCTAssertEqual(receivedValues?.response.url, response.url)
+        XCTAssertEqual(receivedValues?.response.statusCode, response.statusCode)
+    }
+
+    func test_getFromURL_succeedsWithEmptyDataOnHTTPURLResponseWithNilData() {
+        let response = anyHTTPURLResponse()
+
+        let receivedValues = resultValuesFor(
+            data: nil,
+            parameters: nil,
+            headers: nil,
+            response: response,
+            error: nil
+        )
+        let emptyData = Data()
+        XCTAssertEqual(receivedValues?.data, emptyData)
+        XCTAssertEqual(receivedValues?.response.url, response.url)
+        XCTAssertEqual(receivedValues?.response.statusCode, response.statusCode)
+    }
+
+    //    // MARK: - Helpers
 
     private func makeSUT(file: StaticString = #filePath, line: UInt = #line) -> URLSessionHTTPClient {
         let configuration = URLSessionConfiguration.ephemeral
@@ -207,13 +223,15 @@ class URLSessionHTTPClientTests: XCTestCase {
         headers: [String: String]?,
         response: URLResponse?,
         error: NSError?,
+        taskHandler: (HTTPClientTask?) -> Void = { _ in },
         file: StaticString = #file,
-        line: UInt = #line) -> NSError? {
+        line: UInt = #line) -> Error? {
             let result = resultFor(data: data,
                                    parameters: parameters,
                                    headers: headers,
                                    response: response,
                                    error: error,
+                                   taskHandler: taskHandler,
                                    file: file,
                                    line: line)
 
@@ -231,19 +249,35 @@ class URLSessionHTTPClientTests: XCTestCase {
                            headers: [String: String]?,
                            response: URLResponse?,
                            error: NSError?,
+                           taskHandler: (HTTPClientTask?) -> Void = { _ in },
                            file: StaticString = #file,
                            line: UInt = #line) -> HTTPClient.Result {
         URLProtocolStub.stub(data: data, response: response, error: error)
         let sut = makeSUT(file: file, line: line)
         let exp = expectation(description: "Wait for completion")
 
+        // swiftlint:disable:next force_try
+        let urlRequest = try! URLSessionHTTPClient.request(
+            url: anyURL(),
+            parameters: parameters ?? [:],
+            headers: headers ?? [:]
+        )
+
         var receivedResult: HTTPClient.Result!
-        sut.get(from: anyURL(), parameters: parameters ?? [:], headers: headers ?? [:]) { result in
+        taskHandler(sut.get(from: urlRequest) { result in
             receivedResult = result
             exp.fulfill()
-        }
+        })
 
         wait(for: [exp], timeout: 1.0)
         return receivedResult
+    }
+
+    private func anyHTTPURLResponse() -> HTTPURLResponse {
+        return HTTPURLResponse(url: anyURL(), statusCode: 200, httpVersion: nil, headerFields: nil)!
+    }
+
+    private func nonHTTPURLResponse() -> URLResponse {
+        return URLResponse(url: anyURL(), mimeType: nil, expectedContentLength: 0, textEncodingName: nil)
     }
 }
