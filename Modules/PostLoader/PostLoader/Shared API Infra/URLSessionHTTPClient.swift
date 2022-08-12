@@ -8,6 +8,7 @@
 public enum URLSessionError: Error {
     case unexpectedValuesRepresentation
     case couldNotInitializeUrlRequest
+    case invalidURL
 }
 
 public class URLSessionHTTPClient: HTTPClient {
