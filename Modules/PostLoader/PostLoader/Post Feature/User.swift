@@ -10,6 +10,8 @@ import CoreLocation
 
 public struct User: Identifiable {
     public var id: Int
+    public var name: String?
+    public var email: String?
     public var imageUrl: String?
     public var username: String?
     public var address: UserAddress?
@@ -19,6 +21,8 @@ public struct User: Identifiable {
 
     public init(
         id: Int,
+        name: String?,
+        email: String?,
         imageUrl: String?,
         username: String?,
         address: UserAddress?,
