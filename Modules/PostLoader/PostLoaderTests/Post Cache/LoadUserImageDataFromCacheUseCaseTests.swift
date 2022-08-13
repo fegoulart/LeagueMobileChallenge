@@ -8,7 +8,7 @@
 import XCTest
 import PostLoader
 
-class LoadImageDataFromCacheUseCaseTests: XCTestCase {
+class LoadUserImageDataFromCacheUseCaseTests: XCTestCase {
 
     func test_init_doesNotMessageStoreUponCreation() {
         let (_, store) = makeSUT()
@@ -69,7 +69,7 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
     }
 
     func test_loadImageDataFromURL_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
-        let store = ImageDataStoreSpy()
+        let store = UserImageDataStoreSpy()
         let userId = 1
         var sut: LocalUserImageDataLoader? = LocalUserImageDataLoader(store: store)
 
@@ -90,9 +90,9 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
         line: UInt = #line
     ) -> (
         sut: LocalUserImageDataLoader,
-        store: ImageDataStoreSpy
+        store: UserImageDataStoreSpy
     ) {
-        let store = ImageDataStoreSpy()
+        let store = UserImageDataStoreSpy()
         let sut = LocalUserImageDataLoader(store: store)
         trackForMemoryLeaks(store, file: file, line: line)
         trackForMemoryLeaks(sut, file: file, line: line)

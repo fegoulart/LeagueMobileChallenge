@@ -7,24 +7,25 @@
 
 import Foundation
 
-extension CoreDataPostStore: ImageDataStore {
-
-    public func insert(_ data: Data, for url: URL, completion: @escaping (ImageDataStore.InsertionResult) -> Void) {
+extension CoreDataPostStore: UserImageDataStore {
+    public func insert(_ data: Data, userId: Int, url: URL, completion: @escaping (InsertionResult) -> Void) {
         perform { context in
             completion(Result {
-                try ManagedUser.first(with: url, in: context)
+                try ManagedUser.first(with: userId, in: context)
                     .map { $0.data = data }
                     .map(context.save)
             })
         }
     }
 
-    public func retrieve(dataForURL url: URL, completion: @escaping (ImageDataStore.RetrievalResult) -> Void) {
+    public func retrieve(
+        dataForURL url: URL,
+        userId: Int,
+        completion: @escaping (UserImageDataStore.RetrievalResult) -> Void) {
         perform { context in
             completion(Result {
-                try ManagedUser.first(with: url, in: context)?.data
+                try ManagedUser.first(with: userId, in: context)?.data
             })
         }
     }
-
 }

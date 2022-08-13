@@ -7,10 +7,10 @@
 
 import Foundation
 
-public protocol ImageDataStore {
+public protocol UserImageDataStore {
     typealias RetrievalResult = Swift.Result<Data?, Error>
     typealias InsertionResult = Swift.Result<Void, Error>
 
-    func insert(_ data: Data, for url: URL, completion: @escaping (InsertionResult) -> Void)
-    func retrieve(dataForURL url: URL, completion: @escaping (RetrievalResult) -> Void)
+    func insert(_ data: Data, userId: Int, url: URL, completion: @escaping (InsertionResult) -> Void)
+    func retrieve(dataForURL url: URL, userId: Int, completion: @escaping (RetrievalResult) -> Void)
 }

@@ -8,25 +8,34 @@
 import Foundation
 import PostLoader
 
-class ImageDataStoreSpy: ImageDataStore {
+class UserImageDataStoreSpy: UserImageDataStore {
+    func insert(
+        _ data: Data,
+        userId: Int,
+        url: URL,
+        completion: @escaping (UserImageDataStore.InsertionResult) -> Void
+    ) {
+        receivedMessages.append(.insert(data: data, for: url))
+        insertionCompletions.append(completion)
+    }
+
+    func retrieve(
+        dataForURL url: URL,
+        userId: Int,
+        completion: @escaping (UserImageDataStore.RetrievalResult) -> Void
+    ) {
+        receivedMessages.append(.retrieve(dataFor: url))
+        retrievalCompletions.append(completion)
+    }
+
     enum Message: Equatable {
         case insert(data: Data, for: URL)
         case retrieve(dataFor: URL)
     }
 
     private(set) var receivedMessages = [Message]()
-    private var retrievalCompletions = [(ImageDataStore.RetrievalResult) -> Void]()
-    private var insertionCompletions = [(ImageDataStore.InsertionResult) -> Void]()
-
-    func insert(_ data: Data, for url: URL, completion: @escaping (ImageDataStore.InsertionResult) -> Void) {
-        receivedMessages.append(.insert(data: data, for: url))
-        insertionCompletions.append(completion)
-    }
-
-    func retrieve(dataForURL url: URL, completion: @escaping (ImageDataStore.RetrievalResult) -> Void) {
-        receivedMessages.append(.retrieve(dataFor: url))
-        retrievalCompletions.append(completion)
-    }
+    private var retrievalCompletions = [(UserImageDataStore.RetrievalResult) -> Void]()
+    private var insertionCompletions = [(UserImageDataStore.InsertionResult) -> Void]()
 
     func completeRetrieval(with error: Error, at index: Int = 0) {
         retrievalCompletions[index](.failure(error))

@@ -7,16 +7,17 @@
 
 import Foundation
 
-public final class LocalImageDataLoader {
-    private let store: ImageDataStore
+public final class LocalUserImageDataLoader {
+    private let store: UserImageDataStore
 
-    public init(store: ImageDataStore) {
+    public init(store: UserImageDataStore) {
         self.store = store
     }
 }
 
-extension LocalImageDataLoader: ImageDataCache {
-    public typealias SaveResult = ImageDataCache.Result
+extension LocalUserImageDataLoader: UserImageDataCache {
+
+    public typealias SaveResult = UserImageDataCache.Result
 
     public enum SaveError: Error {
         case failed
@@ -24,32 +25,34 @@ extension LocalImageDataLoader: ImageDataCache {
 
     public func save(
         _ data: Data,
-        for url: URL,
+        userId: Int,
+        url: URL,
         completion: @escaping (SaveResult) -> Void
     ) {
-        store.insert(data, for: url) { [weak self] result in
+        store.insert(data, userId: userId, url: url) { [weak self] result in
             guard self != nil else { return }
             completion(result.mapError { _ in SaveError.failed })
         }
     }
 }
 
-extension LocalImageDataLoader: ImageDataLoader {
-    public typealias LoadResult = ImageDataLoader.Result
+extension LocalUserImageDataLoader: UserImageDataLoader {
+
+    public typealias LoadResult = UserImageDataLoader.Result
 
     public enum LoadError: Error {
         case failed
         case notFound
     }
 
-    private final class LoadImageDataTask: ImageDataLoaderTask {
-        private var completion: ((ImageDataLoader.Result) -> Void)?
+    private final class LoadImageDataTask: UserImageDataLoaderTask {
+        private var completion: ((UserImageDataLoader.Result) -> Void)?
 
-        init(_ completion: @escaping (ImageDataLoader.Result) -> Void) {
+        init(_ completion: @escaping (UserImageDataLoader.Result) -> Void) {
             self.completion = completion
         }
 
-        func complete(with result: ImageDataLoader.Result) {
+        func complete(with result: UserImageDataLoader.Result) {
             completion?(result)
         }
 
@@ -62,9 +65,13 @@ extension LocalImageDataLoader: ImageDataLoader {
         }
     }
 
-    public func loadImageData(from url: URL, completion: @escaping (LoadResult) -> Void) -> ImageDataLoaderTask {
+    public func loadUserImageData(
+        url: URL,
+        userId: Int,
+        completion: @escaping (LoadResult) -> Void
+    ) -> UserImageDataLoaderTask {
         let task = LoadImageDataTask(completion)
-        store.retrieve(dataForURL: url) { [weak self] result in
+        store.retrieve(dataForURL: url, userId: userId) { [weak self] result in
             guard self != nil else { return }
             task.complete(with: result
                 .mapError { _ in LoadError.failed }

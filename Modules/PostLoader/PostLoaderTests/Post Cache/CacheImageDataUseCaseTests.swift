@@ -20,8 +20,9 @@ class CacheImageDataUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         let url = anyURL()
         let data = anyData()
+        let userId = 1
 
-        sut.save(data, for: url) { _ in }
+        sut.save(data, userId: userId, url: url) { _ in }
 
         XCTAssertEqual(store.receivedMessages, [.insert(data: data, for: url)])
     }
@@ -44,11 +45,12 @@ class CacheImageDataUseCaseTests: XCTestCase {
     }
 
     func test_saveImageDataFromURL_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
-        let store = ImageDataStoreSpy()
-        var sut: LocalImageDataLoader? = LocalImageDataLoader(store: store)
+        let store = UserImageDataStoreSpy()
+        var sut: LocalUserImageDataLoader? = LocalUserImageDataLoader(store: store)
+        let userId = 1
 
-        var received = [LocalImageDataLoader.SaveResult]()
-        sut?.save(anyData(), for: anyURL()) { received.append($0) }
+        var received = [LocalUserImageDataLoader.SaveResult]()
+        sut?.save(anyData(), userId: userId, url: anyURL()) { received.append($0) }
 
         sut = nil
         store.completeInsertionSuccessfully()
@@ -61,34 +63,35 @@ class CacheImageDataUseCaseTests: XCTestCase {
     private func makeSUT(
         file: StaticString = #file,
         line: UInt = #line
-    ) -> (sut: LocalImageDataLoader, store: ImageDataStoreSpy) {
-        let store = ImageDataStoreSpy()
-        let sut = LocalImageDataLoader(store: store)
+    ) -> (sut: LocalUserImageDataLoader, store: UserImageDataStoreSpy) {
+        let store = UserImageDataStoreSpy()
+        let sut = LocalUserImageDataLoader(store: store)
         trackForMemoryLeaks(store, file: file, line: line)
         trackForMemoryLeaks(sut, file: file, line: line)
         return (sut, store)
     }
 
-    private func failed() -> LocalImageDataLoader.SaveResult {
-        return .failure(LocalImageDataLoader.SaveError.failed)
+    private func failed() -> LocalUserImageDataLoader.SaveResult {
+        return .failure(LocalUserImageDataLoader.SaveError.failed)
     }
 
     private func expect(
-        _ sut: LocalImageDataLoader,
-        toCompleteWith expectedResult: LocalImageDataLoader.SaveResult,
+        _ sut: LocalUserImageDataLoader,
+        toCompleteWith expectedResult: LocalUserImageDataLoader.SaveResult,
         when action: () -> Void,
         file: StaticString = #file,
         line: UInt = #line
     ) {
         let exp = expectation(description: "Wait for save completion")
+        let userId = 1
 
-        sut.save(anyData(), for: anyURL()) { receivedResult in
+        sut.save(anyData(), userId: userId, url: anyURL()) { receivedResult in
             switch (receivedResult, expectedResult) {
             case (.success, .success):
                 break
 
-            case (.failure(let receivedError as LocalImageDataLoader.SaveError),
-                  .failure(let expectedError as LocalImageDataLoader.SaveError)):
+            case (.failure(let receivedError as LocalUserImageDataLoader.SaveError),
+                  .failure(let expectedError as LocalUserImageDataLoader.SaveError)):
                 XCTAssertEqual(receivedError, expectedError, file: file, line: line)
 
             default:
