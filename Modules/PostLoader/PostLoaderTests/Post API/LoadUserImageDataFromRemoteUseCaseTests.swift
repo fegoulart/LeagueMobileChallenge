@@ -16,22 +16,24 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
     }
 
     func test_loadUserImageDataFromURL_requestsDataFromURL() {
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
-        let (sut, client) = makeSUT(urlRequest: urlRequest)
+        let url = URL(string: "https://a-given-url.com")
+        let urlRequest = URLRequest(url: url!)
+        let userId = 1
+        let (sut, client) = makeSUT()
 
-        _ = sut.loadUserImageData(from: urlRequest) { _ in }
+        _ = sut.loadUserImageData(url: url!, userId: userId) { _ in }
 
         XCTAssertEqual(client.requestedURLs, [urlRequest])
     }
 
     func test_loadUserImageDataFromURLTwice_requestsDataFromURLTwice() {
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
-        let (sut, client) = makeSUT(urlRequest: urlRequest)
+        let url = URL(string: "https://a-given-url.com")
+        let urlRequest = URLRequest(url: url!)
+        let userId = 1
+        let (sut, client) = makeSUT()
 
-        _ = sut.loadUserImageData(from: urlRequest) { _ in }
-        _ = sut.loadUserImageData(from: urlRequest) { _ in }
+        _ = sut.loadUserImageData(url: url!, userId: userId) { _ in }
+        _ = sut.loadUserImageData(url: url!, userId: userId) { _ in }
 
         XCTAssertEqual(client.requestedURLs, [urlRequest, urlRequest])
     }
@@ -77,10 +79,11 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
 
     func test_cancelLoadImageDataURLTask_cancelsClientURLRequest() {
         let (sut, client) = makeSUT()
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
+        let url = URL(string: "https://a-given-url.com")
+        let urlRequest = URLRequest(url: url!)
+        let userId = 1
 
-        let task = sut.loadUserImageData(from: urlRequest) { _ in }
+        let task = sut.loadUserImageData(url: url!, userId: userId) { _ in }
         XCTAssertTrue(client.cancelledURLs.isEmpty, "Expected no cancelled URL request until task is cancelled")
 
         task.cancel()
@@ -90,11 +93,11 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
     func test_loadUserImageDataFromURL_doesNotDeliverResultAfterCancellingTask() {
         let (sut, client) = makeSUT()
         let nonEmptyData = Data("non-empty data".utf8)
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
+        let url = URL(string: "https://a-given-url.com")
+        let userId = 1
 
         var received = [UserImageDataLoader.Result]()
-        let task = sut.loadUserImageData(from: urlRequest) { received.append($0) }
+        let task = sut.loadUserImageData(url: url!, userId: userId) { received.append($0) }
         task.cancel()
 
         client.complete(withStatusCode: 404, data: anyData())
@@ -107,11 +110,11 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
     func test_loadUserImageDataFromURL_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
         let client = HTTPClientSpy()
         var sut: RemoteUserImageDataLoader? = RemoteUserImageDataLoader(client: client)
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
+        let url = URL(string: "https://a-given-url.com")
+        let userId = 1
 
         var capturedResults = [UserImageDataLoader.Result]()
-        _ = sut?.loadUserImageData(from: urlRequest) { capturedResults.append($0) }
+        _ = sut?.loadUserImageData(url: url!, userId: userId) { capturedResults.append($0) }
 
         sut = nil
         client.complete(withStatusCode: 200, data: anyData())
@@ -120,7 +123,6 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
     }
 
     private func makeSUT(
-        urlRequest: URLRequest = URLRequest(url: anyURL()),
         file: StaticString = #file,
         line: UInt = #line
     ) -> (
@@ -145,11 +147,11 @@ class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
         file: StaticString = #file,
         line: UInt = #line
     ) {
-        // swiftlint:disable:next force_try
-        let urlRequest = try! "https://a-given-url.com".toURLRequest()
+        let url = URL(string: "https://a-given-url.com")
+        let userId = 1
         let exp = expectation(description: "Wait for load completion")
 
-        _ = sut.loadUserImageData(from: urlRequest) { receivedResult in
+        _ = sut.loadUserImageData(url: url!, userId: userId) { receivedResult in
             switch (receivedResult, expectedResult) {
             case let (.success(receivedData), .success(expectedData)):
                 XCTAssertEqual(receivedData, expectedData, file: file, line: line)

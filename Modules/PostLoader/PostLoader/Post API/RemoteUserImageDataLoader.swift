@@ -44,10 +44,12 @@ public final class RemoteUserImageDataLoader: UserImageDataLoader {
     }
 
     public func loadUserImageData(
-        from urlRequest: URLRequest,
+        url: URL,
+        userId: Int,
         completion: @escaping (UserImageDataLoader.Result) -> Void
     ) -> UserImageDataLoaderTask {
         let task = HTTPClientTaskWrapper(completion)
+        let urlRequest = URLRequest(url: url)
         task.wrapped  = client.get(from: urlRequest) { [weak self] result in
             guard self != nil else { return }
 

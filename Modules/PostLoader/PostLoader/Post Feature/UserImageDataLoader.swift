@@ -15,7 +15,8 @@ public protocol UserImageDataLoader {
     typealias Result = Swift.Result<Data, Error>
 
     func loadUserImageData(
-        from urlRequest: URLRequest,
+        url: URL,
+        userId: Int,
         completion: @escaping (Result) -> Void
     ) -> UserImageDataLoaderTask
 }

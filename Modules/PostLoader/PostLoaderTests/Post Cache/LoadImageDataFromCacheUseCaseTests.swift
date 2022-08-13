@@ -19,8 +19,9 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
     func test_loadImageDataFromURL_requestsStoredDataForURL() {
         let (sut, store) = makeSUT()
         let url = anyURL()
+        let userId = 1
 
-        _ = sut.loadImageData(from: url) { _ in }
+        _ = sut.loadUserImageData(url: url, userId: userId) { _ in }
 
         XCTAssertEqual(store.receivedMessages, [.retrieve(dataFor: url)])
     }
@@ -54,9 +55,10 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
     func test_loadImageDataFromURL_doesNotDeliverResultAfterCancellingTask() {
         let (sut, store) = makeSUT()
         let foundData = anyData()
+        let userId = 1
 
-        var received = [ImageDataLoader.Result]()
-        let task = sut.loadImageData(from: anyURL()) { received.append($0) }
+        var received = [UserImageDataLoader.Result]()
+        let task = sut.loadUserImageData(url: anyURL(), userId: userId) { received.append($0) }
         task.cancel()
 
         store.completeRetrieval(with: foundData)
@@ -68,10 +70,11 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
 
     func test_loadImageDataFromURL_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
         let store = ImageDataStoreSpy()
-        var sut: LocalImageDataLoader? = LocalImageDataLoader(store: store)
+        let userId = 1
+        var sut: LocalUserImageDataLoader? = LocalUserImageDataLoader(store: store)
 
-        var received = [ImageDataLoader.Result]()
-        _ = sut?.loadImageData(from: anyURL()) { received.append($0) }
+        var received = [UserImageDataLoader.Result]()
+        _ = sut?.loadUserImageData(url: anyURL(), userId: userId) { received.append($0) }
 
         sut = nil
         store.completeRetrieval(with: anyData())
@@ -86,22 +89,22 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
         file: StaticString = #file,
         line: UInt = #line
     ) -> (
-        sut: LocalImageDataLoader,
+        sut: LocalUserImageDataLoader,
         store: ImageDataStoreSpy
     ) {
         let store = ImageDataStoreSpy()
-        let sut = LocalImageDataLoader(store: store)
+        let sut = LocalUserImageDataLoader(store: store)
         trackForMemoryLeaks(store, file: file, line: line)
         trackForMemoryLeaks(sut, file: file, line: line)
         return (sut, store)
     }
 
-    private func failed() -> ImageDataLoader.Result {
-        return .failure(LocalImageDataLoader.LoadError.failed)
+    private func failed() -> UserImageDataLoader.Result {
+        return .failure(LocalUserImageDataLoader.LoadError.failed)
     }
 
-    private func notFound() -> ImageDataLoader.Result {
-        return .failure(LocalImageDataLoader.LoadError.notFound)
+    private func notFound() -> UserImageDataLoader.Result {
+        return .failure(LocalUserImageDataLoader.LoadError.notFound)
     }
 
     private func never(file: StaticString = #file, line: UInt = #line) {
@@ -109,21 +112,22 @@ class LoadImageDataFromCacheUseCaseTests: XCTestCase {
     }
 
     private func expect(
-        _ sut: LocalImageDataLoader,
-        toCompleteWith expectedResult: ImageDataLoader.Result,
+        _ sut: LocalUserImageDataLoader,
+        toCompleteWith expectedResult: UserImageDataLoader.Result,
         when action: () -> Void,
         file: StaticString = #file,
         line: UInt = #line
     ) {
         let exp = expectation(description: "Wait for load completion")
+        let userId = 1
 
-        _ = sut.loadImageData(from: anyURL()) { receivedResult in
+        _ = sut.loadUserImageData(url: anyURL(), userId: userId) { receivedResult in
             switch (receivedResult, expectedResult) {
             case let (.success(receivedData), .success(expectedData)):
                 XCTAssertEqual(receivedData, expectedData, file: file, line: line)
 
-            case (.failure(let receivedError as LocalImageDataLoader.LoadError),
-                  .failure(let expectedError as LocalImageDataLoader.LoadError)):
+            case (.failure(let receivedError as LocalUserImageDataLoader.LoadError),
+                  .failure(let expectedError as LocalUserImageDataLoader.LoadError)):
                 XCTAssertEqual(receivedError, expectedError, file: file, line: line)
 
             default:
