@@ -103,10 +103,10 @@ class LoadUserFromRemoteUseCaseTests: XCTestCase {
     func test_load_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
         let url = URL(string: "http://any-url.com")!
         let client = HTTPClientSpy()
-        var sut: RemoteUserSessionTokenLoader? = RemoteUserSessionTokenLoader(url: url, client: client)
+        var sut: RemoteUserLoader? = RemoteUserLoader(url: url, client: client, tokenProvider: {  return "12345" })
 
-        var capturedResults = [RemoteUserSessionTokenLoader.Result]()
-        sut?.load { capturedResults.append($0) }
+        var capturedResults = [RemoteUserLoader.Result]()
+        sut?.load(userId: 1) { capturedResults.append($0) }
 
         sut = nil
         client.complete(withStatusCode: 200, data: makeItemJSON([makeItem(userId: 1).json]))
