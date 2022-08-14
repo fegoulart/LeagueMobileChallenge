@@ -1,29 +1,26 @@
 //
-//  Post.swift
+//  RemotePost.swift
 //  PostLoader
 //
-//  Created by Fernando Luiz Goulart on 13/08/22.
+//  Created by Fernando Luiz Goulart on 14/08/22.
 //
 
 import Foundation
 
-public struct Post: Identifiable {
+public struct RemotePost: Decodable {
     public var id: Int
     public var userId: Int?
-    public var userImageUrl: URL?
     public var title: String?
     public var body: String?
 
-    public init (
+    public init(
         id: Int,
         userId: Int?,
-        userImageUrl: URL?,
         title: String?,
         body: String?
     ) {
         self.id = id
         self.userId = userId
-        self.userImageUrl = userImageUrl
         self.title = title
         self.body = body
     }
