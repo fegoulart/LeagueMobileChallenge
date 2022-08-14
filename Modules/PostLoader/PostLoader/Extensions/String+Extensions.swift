@@ -39,4 +39,8 @@ extension String {
 
         return request
     }
+
+    public var authHeader: [String: String] {
+        return ["x-access-token": self]
+    }
 }
