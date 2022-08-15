@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Post: Identifiable, Equatable {
+public struct Post: Identifiable, Equatable, Hashable {
     public var id: Int
     public var userId: Int?
     public var userImageUrl: URL?

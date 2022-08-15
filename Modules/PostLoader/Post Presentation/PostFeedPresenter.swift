@@ -42,8 +42,8 @@ public final class PostFeedPresenter {
     }
 
     public static var title: String {
-        return NSLocalizedString("FEED_VIEW_TITLE",
-                                 tableName: "POST",
+        return NSLocalizedString("POST_VIEW_TITLE",
+                                 tableName: "Post",
                                  bundle: Bundle(for: PostFeedPresenter.self),
                                  comment: "Title for the post feed view")
     }
