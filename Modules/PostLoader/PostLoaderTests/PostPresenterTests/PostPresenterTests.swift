@@ -1,5 +1,5 @@
 //
-//  PostPresenterTests.swift
+//  UserPresenterTests.swift
 //  PostLoaderTests
 //
 //  Created by Fernando Luiz Goulart on 15/08/22.
@@ -10,91 +10,115 @@ import PostLoader
 
 class PostPresenterTests: XCTestCase {
 
-    func test_title_isLocalized() {
-        XCTAssertEqual(PostFeedPresenter.title, localized("POST_VIEW_TITLE"))
-    }
-
     func test_init_doesNotSendMessagesToView() {
         let (_, view) = makeSUT()
 
         XCTAssertTrue(view.messages.isEmpty, "Expected no view messages")
     }
 
-    func test_didStartLoadingPostFeed_displaysNoErrorMessageAndStartsLoading() {
+    func test_didStartLoadingUser_displaysLoadingImage() {
         let (sut, view) = makeSUT()
 
-        sut.didStartLoadingPostFeed()
+        sut.didStartLoadingUser(for: uniquePost)
 
-        XCTAssertEqual(view.messages, [
-            .displayErrorMessage(.none),
-            .displayIsLoading(true)
-        ])
+        let message = view.messages.first
+        XCTAssertEqual(view.messages.count, 1)
+        XCTAssertEqual(message?.userName, nil)
+        XCTAssertEqual(message?.postTitle, uniquePost.title)
+        XCTAssertEqual(message?.isLoading, true)
+        XCTAssertEqual(message?.postBody, uniquePost.body)
+        XCTAssertNil(message?.userImage)
     }
 
-    func test_didFinishLoadingPostFeed_displaysPostFeedAndStopsLoading() {
+    func test_didFinishLoadingUser_displaysUserName() {
         let (sut, view) = makeSUT()
-        let feed =  PostFeedStub.feed
 
-        sut.didFinishLoadingFeed(with: feed)
+        sut.didSFinishLoadingUser(for: uniquePost, for: uniqueUser)
 
-        XCTAssertEqual(view.messages, [
-            .displayFeed(feed),
-            .displayIsLoading(false)
-        ])
+        let message = view.messages.first
+        XCTAssertEqual(view.messages.count, 1)
+        XCTAssertEqual(message?.userName, uniqueUser.name)
+        XCTAssertEqual(message?.postTitle, uniquePost.title)
+        XCTAssertEqual(message?.isLoading, false)
+        XCTAssertEqual(message?.postBody, uniquePost.body)
+        XCTAssertNil(message?.userImage)
     }
 
-    func test_didFinishLoadingPostFeedWithError_displaysLocalizedErrorMessageAndStopsLoading() {
+    func test_didStartLoadingUserImageData_displaysLoadingImage() {
         let (sut, view) = makeSUT()
 
-        sut.didFinishLoadingFeed(with: anyNSError())
+        sut.didStartLoadingImageData(for: uniquePost, user: uniqueUser)
 
-        XCTAssertEqual(view.messages, [
-            .displayErrorMessage(localized("POST_VIEW_CONNECTION_ERROR")),
-            .displayIsLoading(false)
-        ])
+        let message = view.messages.first
+        XCTAssertEqual(view.messages.count, 1)
+        XCTAssertEqual(message?.userName, uniqueUser.name)
+        XCTAssertEqual(message?.postTitle, uniquePost.title)
+        XCTAssertEqual(message?.isLoading, true)
+        XCTAssertEqual(message?.postBody, uniquePost.body)
+        XCTAssertNil(message?.userImage)
+    }
+
+    func test_didFinishLoadingUserImageData_displaysImageOnSuccessfulTransformation() {
+
+        let transformedData = AnyImage()
+        let (sut, view) = makeSUT(imageTransformer: { _ in transformedData })
+
+        sut.didFinishLoadingImageData(with: Data(), for: uniquePost, user: uniqueUser)
+
+        let message = view.messages.first
+        XCTAssertEqual(view.messages.count, 1)
+        XCTAssertEqual(message?.userName, uniqueUser.name)
+        XCTAssertEqual(message?.postTitle, uniquePost.title)
+        XCTAssertEqual(message?.isLoading, false)
+        XCTAssertEqual(message?.postBody, uniquePost.body)
+        XCTAssertEqual(message?.userImage, transformedData)
     }
 
     // MARK: - Helpers
 
-    private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: PostFeedPresenter, view: ViewSpy) {
+    private func makeSUT(
+        imageTransformer: @escaping (Data) -> AnyImage? = { _ in nil },
+        file: StaticString = #file,
+        line: UInt = #line
+    ) -> (sut: PostPresenter<ViewSpy, AnyImage>, view: ViewSpy) {
         let view = ViewSpy()
-        let sut = PostFeedPresenter(postFeedView: view, loadingView: view, errorView: view)
+        let sut = PostPresenter(view: view, imageTransformer: imageTransformer)
         trackForMemoryLeaks(view, file: file, line: line)
         trackForMemoryLeaks(sut, file: file, line: line)
         return (sut, view)
     }
 
-    private func localized(_ key: String, file: StaticString = #file, line: UInt = #line) -> String {
-        let table = "Post"
-        let bundle = Bundle(for: PostFeedPresenter.self)
-        let value = bundle.localizedString(forKey: key, value: nil, table: table)
-        if value == key {
-            XCTFail("Missing localized string for key: \(key) in table: \(table)", file: file, line: line)
-        }
-        return value
+    private var fail: (Data) -> AnyImage? {
+        return { _ in nil }
     }
 
-    private class ViewSpy: PostFeedView, PostFeedLoadingView, PostFeedErrorView {
+    private struct AnyImage: Equatable {}
 
+    private class ViewSpy: PostView {
         // swiftlint:disable:next nesting
-        enum Message: Hashable {
-            case displayErrorMessage(String?)
-            case displayIsLoading(Bool)
-            case displayFeed([Post])
-        }
+        typealias Image = AnyImage
 
-        private(set) var messages = Set<Message>()
+        private(set) var messages = [PostViewModel<AnyImage>]()
 
-        func display(_ viewModel: PostFeedErrorViewModel) {
-            messages.insert(.displayErrorMessage(viewModel.message))
-        }
-
-        func display(_ viewModel: PostFeedLoadingViewModel) {
-            messages.insert(.displayIsLoading(viewModel.isLoading))
-        }
-
-        func display(_ viewModel: PostFeedViewModel) {
-            messages.insert(.displayFeed(viewModel.feed))
+        func display(_ model: PostViewModel<AnyImage>) {
+            messages.append(model)
         }
     }
+
+    private let uniquePost = Post(
+        id: 69,
+        userId: 7,
+        userImageUrl: nil,
+        title: "fugiat quod pariatur odit minima",
+        body: """
+            officiis error culpa consequatur modi asperiores et\ndolorum assumenda voluptas et vel qui aut vel
+ rerum\nvoluptatum quisquam perspiciatis quia rerum consequatur totam quas\nsequi commodi repudiandae asperiores
+ et saepe a
+"""
+    )
+    private let uniqueUser = User(
+        id: 7,
+        name: "Kurtis Weissnat",
+        imageUrl: URL(string: "https://i.pravatar.cc/150?u=Telly.Hoeger@billy.biz")!
+    )
 }
