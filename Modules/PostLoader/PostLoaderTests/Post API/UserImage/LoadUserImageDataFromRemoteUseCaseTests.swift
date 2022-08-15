@@ -8,7 +8,7 @@
 import XCTest
 import PostLoader
 
-class LoadFeedImageDataFromRemoteUseCaseTests: XCTestCase {
+class LoadUserImageDataFromRemoteUseCaseTests: XCTestCase {
     func test_init_doesNotPerformAnyURLRequest() {
         let (_, client) = makeSUT()
 

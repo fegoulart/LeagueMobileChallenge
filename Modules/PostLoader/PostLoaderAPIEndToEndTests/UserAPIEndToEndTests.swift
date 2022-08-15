@@ -34,16 +34,16 @@ class UserAPIEndToEndTests: XCTestCase {
         wait(for: [exp], timeout: 5.0)
     }
 
-    func test_endToEndTestServerGETFeedResult_matchesFixedTestAccountData() {
+    func test_endToEndTestServerGETUserResult_matchesFixedTestAccountData() {
         switch getUserResult(userId: 8) {
         case let .success(user)?:
             XCTAssertEqual(user, expectedUser())
 
         case let .failure(error)?:
-            XCTFail("Expected successful feed result, got \(error) instead")
+            XCTFail("Expected successful user result, got \(error) instead")
 
         default:
-            XCTFail("Expected successful feed result, got no result instead")
+            XCTFail("Expected successful user result, got no result instead")
         }
     }
 

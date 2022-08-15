@@ -34,7 +34,7 @@ class PostsAPIEndToEndTests: XCTestCase {
         wait(for: [exp], timeout: 5.0)
     }
 
-    func test_endToEndTestServerGETFeedResult_matchesFixedTestAccountData() {
+    func test_endToEndTestServerGETPostResult_matchesFixedTestAccountData() {
         switch getPostsResult() {
         case let .success(posts):
             XCTAssertEqual(posts.count, 100)
@@ -42,7 +42,7 @@ class PostsAPIEndToEndTests: XCTestCase {
             XCTAssert(posts.allSatisfy { $0.title != nil })
             XCTAssert(posts.allSatisfy { $0.body != nil })
         case let .failure(error):
-            XCTFail("Expected successful feed result, got \(error) instead")
+            XCTFail("Expected successful post result, got \(error) instead")
         }
     }
 
