@@ -21,7 +21,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         let urlRequest = URLRequest(url: url)
         let (sut, client) = makeSUT(url: url)
 
-        sut.load { _ in }
+        _ = sut.load()
 
         XCTAssertEqual(client.requestedURLs, [urlRequest])
     }
@@ -31,8 +31,8 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         let urlRequest = URLRequest(url: url)
         let (sut, client) = makeSUT(url: url)
 
-        sut.load { _ in }
-        sut.load { _ in }
+        _ = sut.load()
+        _ = sut.load()
 
         XCTAssertEqual(client.requestedURLs, [urlRequest, urlRequest])
     }
@@ -40,7 +40,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
     func test_load_deliversErrorOnClientError() {
         let (sut, client) = makeSUT()
 
-        expect(sut, toCompleteWith: failure(.connectivity), when: {
+        expect(sut, toCompleteWith: failure(.invalidData), when: {
             let clientError = NSError(domain: "Test", code: 0)
             client.complete(with: clientError)
         })
@@ -52,7 +52,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         let samples = [199, 201, 300, 400, 500]
 
         samples.enumerated().forEach { index, code in
-            expect(sut, toCompleteWith: failure(.invalidData), when: {
+            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
                 let json = makeItemJSON(token: "1234")
                 client.complete(withStatusCode: code, data: json, at: index)
             })
@@ -62,7 +62,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         func test_load_deliversErrorOn200HTTPResponseWithInvalidJSON() {
             let (sut, client) = makeSUT()
 
-            expect(sut, toCompleteWith: failure(.invalidData), when: {
+            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
                 let invalidJSON = Data("invalid json".utf8)
                 client.complete(withStatusCode: 200, data: invalidJSON)
             })
@@ -71,7 +71,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         func test_load_deliversNoItemsOn200HTTPResponseWithEmptyJSON() {
             let (sut, client) = makeSUT()
 
-            expect(sut, toCompleteWith: .failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
+            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
                 let emptyListJson = makeItemJSON(token: nil)
                 client.complete(withStatusCode: 200, data: emptyListJson)
             })
@@ -80,7 +80,7 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         func test_load_deliversItemOn200HTTPResponseWithJSONItem() {
             let (sut, client) = makeSUT()
 
-            expect(sut, toCompleteWith: .success("1234"), when: {
+            expect(sut, toCompleteWith: "1234", when: {
                 let json = makeItemJSON(token: "1234")
                 client.complete(withStatusCode: 200, data: json)
             })
@@ -91,8 +91,9 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
             let client = HTTPClientSpy()
             var sut: RemoteUserSessionTokenLoader? = RemoteUserSessionTokenLoader(url: url, client: client)
 
-            var capturedResults = [RemoteUserSessionTokenLoader.Result]()
-            sut?.load { capturedResults.append($0) }
+            var capturedResults = [String?]()
+            let result = sut?.load()
+            capturedResults.append(result)
 
             sut = nil
             client.complete(withStatusCode: 200, data: makeItemJSON(token: "1234"))
@@ -117,8 +118,8 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         return (sut, client)
     }
 
-    private func failure(_ error: RemoteUserSessionTokenLoader.Error) -> RemoteUserSessionTokenLoader.Result {
-        return .failure(error)
+    private func failure(_ error: RemoteUserSessionTokenLoader.Error) -> String? {
+        return nil
     }
 
     private func makeItem(token: String?) -> (model: String?, json: [String: Any]) {
@@ -139,34 +140,16 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
 
     private func expect(
         _ sut: RemoteUserSessionTokenLoader,
-        toCompleteWith expectedResult: RemoteUserSessionTokenLoader.Result,
+        toCompleteWith expectedResult: String?,
         when action: () -> Void,
         file: StaticString = #file,
         line: UInt = #line
     ) {
-        let exp = expectation(description: "Wait for load completion")
 
-        sut.load { receivedResult in
-            switch (receivedResult, expectedResult) {
-            case let (.success(receivedItems), .success(expectedItems)):
-                XCTAssertEqual(receivedItems, expectedItems, file: file, line: line)
-
-            case let (
-                .failure(receivedError as RemoteUserSessionTokenLoader.Error),
-                .failure(expectedError as RemoteUserSessionTokenLoader.Error)
-            ):
-                XCTAssertEqual(receivedError, expectedError, file: file, line: line)
-
-            default:
-                XCTFail("Expected result \(expectedResult) got \(receivedResult) instead", file: file, line: line)
-            }
-
-            exp.fulfill()
-        }
-
+        let receivedResult = sut.load()
         action()
 
-        wait(for: [exp], timeout: 1.0)
+        XCTAssertEqual(receivedResult, expectedResult, file: file, line: line)
     }
 
 }

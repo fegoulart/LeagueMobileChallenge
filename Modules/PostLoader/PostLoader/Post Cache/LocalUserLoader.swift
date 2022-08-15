@@ -44,29 +44,57 @@ extension LocalUserLoader: UserCache {
 }
 
 extension LocalUserLoader: UserLoader {
+
     public typealias LoadResult = UserLoader.Result
 
-    public func load(userId: Int, completion: @escaping (LoadResult) -> Void) {
+    public enum LoadError: Error {
+        case failed
+        case notFound
+    }
+
+    private final class LoadUserTask: UserLoaderTask {
+        private var completion: ((UserLoader.Result) -> Void)?
+
+        init(_ completion: @escaping (UserLoader.Result) -> Void) {
+            self.completion = completion
+        }
+
+        func complete(with result: UserLoader.Result) {
+            completion?(result)
+        }
+
+        func cancel() {
+            preventFurtherCompletions()
+        }
+
+        private func preventFurtherCompletions() {
+            completion = nil
+        }
+    }
+
+    @discardableResult
+    public func load(userId: Int, completion: @escaping (LoadResult) -> Void) -> UserLoaderTask? {
+
+        let task: LoadUserTask = LoadUserTask(completion)
+
         store.retrieve(userWithId: userId) { [weak self] result in
             guard let self = self else { return }
-
             switch result {
-            case let .failure(error):
-                completion(.failure(error))
-
+            case .failure:
+                task.complete(with: .failure(LoadError.failed))
             case let .success(.some(user)):
-
                 guard let cacheCreationDate = user.cacheInsertionDate,
-                        UserCachePolicy.validate(cacheCreationDate, against: self.currentDate()) else {
-                    completion(.success(nil))
+                      UserCachePolicy.validate(cacheCreationDate, against: self.currentDate()) else {
+                    task.complete(with: .failure(LoadError.notFound))
                     return
                 }
-                completion(.success(user.toModel()))
+                task.complete(with: .success(user.toModel()))
 
             case .success:
-                completion(.success(nil))
+                task.complete(with: .failure(LoadError.notFound))
             }
         }
+        return task
     }
 }
 

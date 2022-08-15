@@ -27,17 +27,43 @@ public final class RemoteUserLoader: UserLoader {
         self.tokenProvider = tokenProvider
     }
 
-    public func load(userId: Int, completion: @escaping (Result) -> Void) {
+    private final class HTTPClientTaskWrapper: UserLoaderTask {
+        private var completion: ((UserLoader.Result) -> Void)?
+
+        var wrapped: HTTPClientTask?
+
+        init(_ completion: @escaping (UserLoader.Result) -> Void) {
+            self.completion = completion
+        }
+
+        func complete(with result: UserLoader.Result) {
+            completion?(result)
+        }
+
+        func cancel() {
+            preventFurtherCompletions()
+            wrapped?.cancel()
+        }
+
+        private func preventFurtherCompletions() {
+            completion = nil
+        }
+    }
+
+    @discardableResult
+    public func load(userId: Int, completion: @escaping (Result) -> Void) -> UserLoaderTask? {
 
         guard let header: [String: String] = try? tokenProvider().authHeader else {
             completion(.failure(RemoteUserLoader.Error.notAuthorized))
-            return
+            return nil
         }
         guard let urlRequest = try? url.toURLRequest(headers: header) else {
             completion(.failure(RemoteUserLoader.Error.invalidUrl))
-            return
+            return nil
         }
-        _ = client.get(from: urlRequest) { [weak self] result in
+
+        let task = HTTPClientTaskWrapper(completion)
+        task.wrapped = client.get(from: urlRequest) { [weak self] result in
             guard self != nil else { return }
 
             switch result {
@@ -48,6 +74,7 @@ public final class RemoteUserLoader: UserLoader {
                 completion(.failure(Error.connectivity))
             }
         }
+        return task
     }
 
     private static func map(_ data: Data, userId: Int, from response: HTTPURLResponse) -> Result {

@@ -19,14 +19,14 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
     func test_load_requestsCacheRetrieval() {
         let (sut, store) = makeSUT()
 
-        sut.load(userId: 1) { _ in }
+        _ = sut.load(userId: 1) { _ in }
 
         XCTAssertEqual(store.receivedMessages, [.retrieve(1)])
     }
 
     func test_load_failsOnRetrievalError() {
         let (sut, store) = makeSUT()
-        let retrievalError = anyNSError()
+        let retrievalError = LocalUserLoader.LoadError.failed
 
         expect(sut, toCompleteWith: .failure(retrievalError), when: {
             store.completeRetrieval(with: retrievalError)
@@ -36,7 +36,7 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
     func test_load_deliversNoUserOnEmptyCache() {
         let (sut, store) = makeSUT()
 
-        expect(sut, toCompleteWith: .success(nil), when: {
+        expect(sut, toCompleteWith: .failure(LocalUserLoader.LoadError.notFound), when: {
             store.completeRetrievalWithEmptyCache()
         })
     }
@@ -59,7 +59,7 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
         let expirationTimestamp = fixedCurrentDate.minusUserCacheMaxAge()
         let (sut, store) = makeSUT(currentDate: { fixedCurrentDate })
 
-        expect(sut, toCompleteWith: .success(nil), when: {
+        expect(sut, toCompleteWith: .failure(LocalUserLoader.LoadError.notFound), when: {
             store.completeRetrieval(with: localUser, timestamp: expirationTimestamp)
         })
     }
@@ -70,7 +70,7 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
         let expiredTimestamp = fixedCurrentDate.minusUserCacheMaxAge().adding(seconds: -1)
         let (sut, store) = makeSUT(currentDate: { fixedCurrentDate })
 
-        expect(sut, toCompleteWith: .success(nil), when: {
+        expect(sut, toCompleteWith: .failure(LocalUserLoader.LoadError.notFound), when: {
             store.completeRetrieval(with: localUser, timestamp: expiredTimestamp)
         })
     }
@@ -78,7 +78,7 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
     func test_load_hasNoSideEffectsOnRetrievalError() {
         let (sut, store) = makeSUT()
 
-        sut.load(userId: 1) { _ in }
+        _ = sut.load(userId: 1) { _ in }
         store.completeRetrieval(with: anyNSError())
 
         XCTAssertEqual(store.receivedMessages, [.retrieve(1)])
@@ -165,7 +165,7 @@ class LoadUserFromCacheUseCaseTests: XCTestCase {
     ) {
         let exp = expectation(description: "Wait for load completion")
 
-        sut.load(userId: 1) { receivedResult in
+        _ = sut.load(userId: 1) { receivedResult in
             switch (receivedResult, expectedResult) {
             case let (.success(receivedUser), .success(expectedUser)):
                 XCTAssertEqual(receivedUser, expectedUser, file: file, line: line)

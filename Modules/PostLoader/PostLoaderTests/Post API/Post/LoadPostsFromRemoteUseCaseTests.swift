@@ -168,7 +168,7 @@ class LoadPostsFromRemoteUseCaseTests: XCTestCase {
 \nquis hic commodi nesciunt rem tenetur doloremque ipsam iure\nquis sunt voluptatem rerum illo velit
 """
     ) -> (model: Post, json: [String: Any]) {
-        let item = Post(id: id, userId: userId, userImageUrl: nil, title: title, body: body)
+        let item = Post(id: id, userId: userId, userName: nil, userImageUrl: nil, title: title, body: body)
 
         let json = [
             "userId": userId as Any,

@@ -76,4 +76,14 @@ public class URLSessionHTTPClient: HTTPClient {
         task.resume()
         return URLSessionTaskWrapper(wrapped: task)
     }
+
+    public func get(from request: URLRequest) -> HTTPClient.Result {
+        let (data, response, error) = session.syncRequest(with: request)
+        if let error = error {
+            return .failure(error)
+        } else if let data = data, let response = response as? HTTPURLResponse {
+            return .success((data, response))
+        }
+        return .failure(URLSessionError.unexpectedValuesRepresentation)
+    }
 }

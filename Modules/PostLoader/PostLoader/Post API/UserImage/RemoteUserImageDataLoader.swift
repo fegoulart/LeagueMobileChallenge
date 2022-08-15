@@ -50,7 +50,7 @@ public final class RemoteUserImageDataLoader: UserImageDataLoader {
     ) -> UserImageDataLoaderTask {
         let task = HTTPClientTaskWrapper(completion)
         let urlRequest = URLRequest(url: url)
-        task.wrapped  = client.get(from: urlRequest) { [weak self] result in
+        task.wrapped = client.get(from: urlRequest) { [weak self] result in
             guard self != nil else { return }
 
             task.complete(with: result

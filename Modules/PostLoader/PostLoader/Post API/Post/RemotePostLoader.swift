@@ -70,6 +70,15 @@ public final class RemotePostLoader: PostLoader {
 
 private extension Array where Element == RemotePost {
     func toModels() -> [Post] {
-        return map { Post(id: $0.id, userId: $0.userId, userImageUrl: nil, title: $0.title, body: $0.body) }
+        return map {
+            Post(
+                id: $0.id,
+                userId: $0.userId,
+                userName: nil,
+                userImageUrl: nil,
+                title: $0.title,
+                body: $0.body
+            )
+        }
     }
 }

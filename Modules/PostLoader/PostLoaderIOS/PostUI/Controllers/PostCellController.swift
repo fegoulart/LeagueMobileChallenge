@@ -8,12 +8,14 @@
 import UIKit
 import PostLoader
 
-public protocol PostCellControllerDelegate {
-    func didRequestImage()
-    func didCancelImageRequest()
+public protocol PostCellControllerDelegate: AnyObject {
+    func didRequestUser()
+    func didCancelUserRequest()
+    func didRequestUserImage()
+    func didCancelUserImageRequest()
 }
 
-public final class PostCellController: PostImageView {
+public final class PostCellController: PostView {
     public typealias Image = UIImage
 
     private let delegate: PostCellControllerDelegate
@@ -25,30 +27,30 @@ public final class PostCellController: PostImageView {
 
     func view(in tableView: UITableView) -> UITableViewCell {
         cell = tableView.dequeueReusableCell()
-        delegate.didRequestImage()
+        delegate.didRequestUser()
+        // delegate.didRequestUserImage()
         return cell!
     }
 
     func preload() {
-        delegate.didRequestImage()
+        delegate.didRequestUser()
+        // delegate.didRequestImage()
     }
 
     func cancelLoad() {
         releaseCellForReuse()
-        delegate.didCancelImageRequest()
+        delegate.didCancelUserRequest()
+        // delegate.didCancelImageRequest()
     }
 
-    public func display(_ viewModel: PostImageViewModel<UIImage>) {
-        cell?.postBodyLabel = viewModel.
-
-
-        cell?.locationContainer.isHidden = !viewModel.hasLocation
-        cell?.locationLabel.text = viewModel.location
-        cell?.descriptionLabel.text = viewModel.description
-        cell?.feedImageView.setImageAnimated(viewModel.image)
-        cell?.feedImageContainer.isShimmering = viewModel.isLoading
-        cell?.feedImageRetryButton.isHidden = !viewModel.shouldRetry
-        cell?.onRetry = delegate.didRequestImage
+    public func display(_ viewModel: PostViewModel<UIImage>) {
+        cell?.postBodyLabel.text = viewModel.postBody ?? ""
+        cell?.postTitleLabel.text = viewModel.postTitle ?? ""
+        cell?.userNameLabel.text = viewModel.userName ?? ""
+        cell?.postContainer.isShimmering = viewModel.isLoading && viewModel.postTitle == nil
+        cell?.userContainer.isShimmering = viewModel.isLoading && viewModel.userName == nil &&
+        viewModel.userImage == nil
+        cell?.userImageView.setImageAnimated(viewModel.userImage)
     }
 
     private func releaseCellForReuse() {

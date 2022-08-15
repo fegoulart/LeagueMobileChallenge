@@ -7,8 +7,12 @@
 
 import Foundation
 
+public protocol UserLoaderTask {
+    func cancel()
+}
+
 public protocol UserLoader {
     typealias Result = Swift.Result<User?, Error>
 
-    func load(userId: Int, completion: @escaping (Result) -> Void)
+    func load(userId: Int, completion: @escaping (Result) -> Void) -> UserLoaderTask?
 }

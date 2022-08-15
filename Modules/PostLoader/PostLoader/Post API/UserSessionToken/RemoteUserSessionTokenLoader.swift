@@ -17,8 +17,6 @@ public final class RemoteUserSessionTokenLoader: UserSessionTokenLoader {
         case invalidData
     }
 
-    public typealias Result = UserSessionTokenLoader.Result
-
     public init(url: URL, client: HTTPClient) {
         self.url = url
         self.client = client
@@ -28,33 +26,27 @@ public final class RemoteUserSessionTokenLoader: UserSessionTokenLoader {
         fatalError("Not implemented")
     }
 
-    public func load(completion: @escaping (Result) -> Void) {
+    public func load() -> String? {
+
         let urlRequest = URLRequest(url: self.url)
-
-        _ = client.get(
-            from: urlRequest
-        ) { [weak self] result in
-            guard self != nil else { return }
-
-            switch result {
-            case let .success((data, response)):
-                completion(RemoteUserSessionTokenLoader.map(data, from: response))
-            case .failure:
-                completion(.failure(Error.connectivity))
+        let result = client.get(from: urlRequest)
+        switch result {
+        case .success(let (data, response)):
+            guard let token = try? RemoteUserSessionTokenLoader.map(data, from: response) else {
+                return nil
             }
+            return token
+        case .failure:
+            return nil
         }
     }
 
-    private static func map(_ data: Data, from response: HTTPURLResponse) -> Result {
-        do {
-            let remoteToken = try UserSessionTokenMapper.map(data, from: response)
-            guard let token = remoteToken.value else {
-                return .failure(Error.invalidData)
-            }
-            return .success(token)
-        } catch {
-            return .failure(error)
+    private static func map(_ data: Data, from response: HTTPURLResponse) throws -> String {
+        let remoteToken = try UserSessionTokenMapper.map(data, from: response)
+        guard let token = remoteToken.value else {
+            throw Error.invalidData
         }
+        return token
     }
 }
 

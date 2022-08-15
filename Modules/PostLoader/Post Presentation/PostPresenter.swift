@@ -32,7 +32,7 @@ public final class PostPresenter<View: PostView, Image> where View.Image == Imag
         )
     }
 
-    public func didSFinishLoadingUser(for model: Post, for user: User) {
+    public func didFinishLoadingUser(for model: Post, for user: User) {
         view.display(
             PostViewModel(
                 userName: user.name,

@@ -4,7 +4,11 @@
    <FileRef
       location = "group:LeagueMobileChallenge.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:Pods/Pods.xcodeproj">
-   </FileRef>
+   <Group
+      location = "container:"
+      name = "Modules">
+      <FileRef
+         location = "group:Modules/PostLoader/PostLoader.xcodeproj">
+      </FileRef>
+   </Group>
 </Workspace>

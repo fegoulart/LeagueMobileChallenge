@@ -14,6 +14,7 @@ public protocol UserImageDataLoaderTask {
 public protocol UserImageDataLoader {
     typealias Result = Swift.Result<Data, Error>
 
+    @discardableResult
     func loadUserImageData(
         url: URL,
         userId: Int,

@@ -10,14 +10,14 @@ import Foundation
 import UIKit
 import PostLoader
 
-public protocol PostViewControllerDelegate {
+public protocol PostViewControllerDelegate: AnyObject {
     func didRequestPostRefresh()
 }
 
 public final class PostViewController: UITableViewController,
                                         UITableViewDataSourcePrefetching,
-                                        PostLoadingView,
-                                        PostErrorView {
+                                        PostFeedLoadingView,
+                                        PostFeedErrorView {
     @IBOutlet private(set) public var errorView: ErrorView?
 
     private var loadingControllers = [IndexPath: PostCellController]()
@@ -49,11 +49,11 @@ public final class PostViewController: UITableViewController,
         tableModel = cellControllers
     }
 
-    public func display(_ viewModel: FeedLoadingViewModel) {
+    public func display(_ viewModel: PostFeedLoadingViewModel) {
         refreshControl?.update(isRefreshing: viewModel.isLoading)
     }
 
-    public func display(_ viewModel: FeedErrorViewModel) {
+    public func display(_ viewModel: PostFeedErrorViewModel) {
         errorView?.message = viewModel.message
     }
 
@@ -83,7 +83,7 @@ public final class PostViewController: UITableViewController,
         indexPaths.forEach(cancelCellControllerLoad)
     }
 
-    private func cellController(forRowAt indexPath: IndexPath) -> FeedImageCellController {
+    private func cellController(forRowAt indexPath: IndexPath) -> PostCellController {
         let controller = tableModel[indexPath.row]
         loadingControllers[indexPath] = controller
         return controller

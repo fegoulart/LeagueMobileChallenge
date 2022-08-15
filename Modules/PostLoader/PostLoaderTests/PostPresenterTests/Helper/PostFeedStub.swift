@@ -13,6 +13,7 @@ public struct PostFeedStub {
         Post(
             id: 73,
             userId: 8,
+            userName: nil,
             userImageUrl: nil,
             title: "consequuntur deleniti eos quia temporibus ab aliquid at",
             body: """
@@ -23,6 +24,7 @@ explicabo\naut eum minima consequatur\ntempore cumque quae est et\net in consequ
         Post(
             id: 11,
             userId: 2,
+            userName: nil,
             userImageUrl: nil,
             title: "et ea vero quia laudantium autem",
             body: """
@@ -33,6 +35,7 @@ voluptatibus\naccusamus in eum beatae sit\nvel qui neque voluptates ut commodi q
         Post(
             id: 7,
             userId: 69,
+            userName: nil,
             userImageUrl: nil,
             title: "fugiat quod pariatur odit minima",
             body: """

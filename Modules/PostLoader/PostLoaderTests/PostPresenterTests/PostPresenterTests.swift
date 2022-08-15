@@ -33,7 +33,7 @@ class PostPresenterTests: XCTestCase {
     func test_didFinishLoadingUser_displaysUserName() {
         let (sut, view) = makeSUT()
 
-        sut.didSFinishLoadingUser(for: uniquePost, for: uniqueUser)
+        sut.didFinishLoadingUser(for: uniquePost, for: uniqueUser)
 
         let message = view.messages.first
         XCTAssertEqual(view.messages.count, 1)
@@ -108,6 +108,7 @@ class PostPresenterTests: XCTestCase {
     private let uniquePost = Post(
         id: 69,
         userId: 7,
+        userName: nil,
         userImageUrl: nil,
         title: "fugiat quod pariatur odit minima",
         body: """

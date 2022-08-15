@@ -8,7 +8,6 @@
 import Foundation
 
 public protocol UserSessionTokenLoader {
-    typealias Result = Swift.Result<String, Error>
 
-    func load(completion: @escaping (Swift.Result<String, Error>) -> Void)
+    func load() -> String?
 }
