@@ -38,68 +38,58 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
     }
 
     func test_load_deliversErrorOnClientError() {
-        let (sut, client) = makeSUT()
+        let clientError = NSError(domain: "Test", code: 0)
 
-        expect(sut, toCompleteWith: failure(.invalidData), when: {
-            let clientError = NSError(domain: "Test", code: 0)
-            client.complete(with: clientError)
-        })
+        let client = SyncHTTPSpy(forcedResult: .failure(clientError))
+        let sut = RemoteUserSessionTokenLoader(url: anyURL(), client: client)
+        let result = sut.load()
+
+        XCTAssertEqual(result, failure(.invalidData))
     }
 
     func test_load_deliversErrorOnNon200HTTPResponse() {
-        let (sut, client) = makeSUT()
 
         let samples = [199, 201, 300, 400, 500]
 
-        samples.enumerated().forEach { index, code in
-            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
-                let json = makeItemJSON(token: "1234")
-                client.complete(withStatusCode: code, data: json, at: index)
-            })
+        samples.enumerated().forEach { _, code in
+            let httpResponse: HTTPURLResponse = HTTPURLResponse(statusCode: code)
+            let data = anyTokenData()
+            let forcedResult: HTTPClient.Result = .success((data, httpResponse))
+            let client = SyncHTTPSpy(forcedResult: forcedResult)
+            let sut = RemoteUserSessionTokenLoader(url: anyURL(), client: client)
+            let result = sut.load()
+            XCTAssertEqual(result, nil)
         }
     }
 
-        func test_load_deliversErrorOn200HTTPResponseWithInvalidJSON() {
-            let (sut, client) = makeSUT()
+    func test_load_deliversErrorOn200HTTPResponseWithInvalidJSON() {
+        let httpResponse: HTTPURLResponse = HTTPURLResponse(statusCode: 200)
+        let data = Data("invalid json".utf8)
+        let forcedResult: HTTPClient.Result = .success((data, httpResponse))
+        let client = SyncHTTPSpy(forcedResult: forcedResult)
+        let sut = RemoteUserSessionTokenLoader(url: anyURL(), client: client)
+        let result = sut.load()
+        XCTAssertEqual(result, nil)
+    }
 
-            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
-                let invalidJSON = Data("invalid json".utf8)
-                client.complete(withStatusCode: 200, data: invalidJSON)
-            })
-        }
+    func test_load_deliversNoItemsOn200HTTPResponseWithEmptyJSON() {
+        let httpResponse: HTTPURLResponse = HTTPURLResponse(statusCode: 200)
+        let data = makeItemJSON(token: nil)
+        let forcedResult: HTTPClient.Result = .success((data, httpResponse))
+        let client = SyncHTTPSpy(forcedResult: forcedResult)
+        let sut = RemoteUserSessionTokenLoader(url: anyURL(), client: client)
+        let result = sut.load()
+        XCTAssertEqual(result, nil)
+    }
 
-        func test_load_deliversNoItemsOn200HTTPResponseWithEmptyJSON() {
-            let (sut, client) = makeSUT()
+    func test_load_deliversItemOn200HTTPResponseWithJSONItem() {
+        let (sut, client) = makeSUT()
 
-            expect(sut, toCompleteWith: failure(RemoteUserSessionTokenLoader.Error.invalidData), when: {
-                let emptyListJson = makeItemJSON(token: nil)
-                client.complete(withStatusCode: 200, data: emptyListJson)
-            })
-        }
-
-        func test_load_deliversItemOn200HTTPResponseWithJSONItem() {
-            let (sut, client) = makeSUT()
-
-            expect(sut, toCompleteWith: "1234", when: {
-                let json = makeItemJSON(token: "1234")
-                client.complete(withStatusCode: 200, data: json)
-            })
-        }
-
-        func test_load_doesNotDeliverResultAfterSUTInstanceHasBeenDeallocated() {
-            let url = URL(string: "http://any-url.com")!
-            let client = HTTPClientSpy()
-            var sut: RemoteUserSessionTokenLoader? = RemoteUserSessionTokenLoader(url: url, client: client)
-
-            var capturedResults = [String?]()
-            let result = sut?.load()
-            capturedResults.append(result)
-
-            sut = nil
-            client.complete(withStatusCode: 200, data: makeItemJSON(token: "1234"))
-
-            XCTAssertTrue(capturedResults.isEmpty)
-        }
+        expect(sut, toCompleteWith: "1234", when: {
+            let json = makeItemJSON(token: "1234")
+            client.complete(withStatusCode: 200, data: json)
+        })
+    }
 
     // MARK: - Helpers
 
@@ -152,4 +142,21 @@ class LoadUserTokenFromRemoteUseCaseTests: XCTestCase {
         XCTAssertEqual(receivedResult, expectedResult, file: file, line: line)
     }
 
+}
+
+class SyncHTTPSpy: HTTPClient {
+    typealias Result = HTTPClient.Result
+    let forcedResult: Result
+
+    init(forcedResult: Result) {
+        self.forcedResult = forcedResult
+    }
+
+    func get(from request: URLRequest, completion: @escaping (Result) -> Void) -> HTTPClientTask {
+        fatalError("not implemented")
+    }
+
+    func get(from request: URLRequest) -> Result {
+        return forcedResult
+    }
 }

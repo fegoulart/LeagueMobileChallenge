@@ -32,11 +32,10 @@ public class UserLoaderWithFallbackComposite: UserLoader {
             switch result {
             case . success:
                 completion(result)
-                self?.
             case .failure:
-                self?.fallback.load(userId: userId, completion: completion)
+                _ = self?.fallback.load(userId: userId, completion: completion)
             }
-
         }
+        return primaryLoaderTask
     }
 }

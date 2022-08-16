@@ -32,7 +32,13 @@ class HTTPClientSpy: HTTPClient {
     func get(from request: URLRequest) -> HTTPClient.Result {
         let completion: (HTTPClient.Result) -> Void = { _ in }
         messages.append((request, completion))
-        return .success((anyData(), .init(statusCode: 200)))
+        return .success((anyTokenData(), .init(statusCode: 200)))
+    }
+
+    func get(from request: URLRequest, mockedResult: HTTPClient.Result) -> HTTPClient.Result {
+        let completion: (HTTPClient.Result) -> Void = { _ in }
+        messages.append((request, completion))
+        return mockedResult
     }
 
     func complete(with error: Error, at index: Int = 0) {

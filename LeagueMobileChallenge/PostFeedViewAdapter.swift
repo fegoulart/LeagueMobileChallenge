@@ -41,8 +41,4 @@ final class PostFeedViewAdapter: PostFeedView {
             return view
         })
     }
-
-
-
-
 }

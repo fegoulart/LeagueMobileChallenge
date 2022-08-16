@@ -56,7 +56,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func configureWindow() {
         window?.rootViewController = UINavigationController(
             rootViewController: PostUIComposer.postFeedComposedWith(
-                ΩpostLoader: makeRemotePostLoader(completion: <#(Result<PostLoader, Error>) -> ()#>),
+                postLoader: makeRemotePostLoader(),
                 userLoader: makeLocalUserLoaderWithRemoteFallback(),
                 userImageDataLoader: makeLocalUserImageDataLoaderWithRemoteFallback()
             )
@@ -69,65 +69,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         localUserLoader.validateCache { _ in }
     }
 
-
-    private func makeRemotePostLoader(completion: @escaping (Swift.Result<PostLoader, Error>) -> ()) {
-
-        DispatchQueue.global().async {
-            self.remoteUserSessionTokenLoader.load { result in
-                switch result {
-                case .success(let token):
-                    let remoteURL = URL(string: "https://engineering.league.dev/challenge/api/posts")!
-                    let remotePostLoader = RemotePostLoader(url: remoteURL, client: self.httpClient) { return token }
-                    completion(.success(remotePostLoader))
-                case .failure(let error):
-                    completion(.failure(error))
-                }
-            }
+    private func makeRemotePostLoader() -> PostLoader {
+        let remoteURL = URL(string: "https://engineering.league.dev/challenge/api/posts")!
+        let remotePostLoader = RemotePostLoader(url: remoteURL, client: self.httpClient) { [weak self] in
+            guard let self = self else { return ""}
+            return self.remoteUserSessionTokenLoader.load() ?? ""
         }
+        return remotePostLoader
     }
 
-    private func makeLocalUserLoaderWithRemoteFallback(completion: @escaping (Swift.Result<UserLoader, Error>)) {
-
-        DispatchQueue.global().async {
-            self.remoteUserSessionTokenLoader.load { result in
-                switch result {
-                case .success(let token):
-                    let remoteURL = URL(string: "https://engineering.league.dev/challenge/api/users")!
-                    let remoteUserLoader = RemoteUserLoader(url: remoteURL, client: self.httpClient) { return token }
-                    let localUserLoader = LocalUserLoader(store: self.store, currentDate: Date.init)
-                    let userLoader = UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)
-                    completion(.success(userLoader))
-                    //completion(.success(UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)))
-                case .failure(let error):
-                    //completion(.failure(error))
-                }
-            }
+    private func makeLocalUserLoaderWithRemoteFallback() -> UserLoader {
+        let remoteURL = URL(string: "https://engineering.league.dev/challenge/api/users")!
+        let remoteUserLoader = RemoteUserLoader(url: remoteURL, client: self.httpClient) { [weak self] in
+            guard let self = self else { return ""}
+            return self.remoteUserSessionTokenLoader.load() ?? ""
         }
-
-
-
-//
-//        let remoteURL = URL(string: "https://engineering.league.dev/challenge/api/users")!
-//
-//        let remoteUserLoader = RemoteUserLoader(url: remoteURL, client: httpClient) { [weak self] in
-//            guard let self = self else { return "" }
-//            DispatchQueue.global().async {
-//                self.remoteUserSessionTokenLoader.load { result in
-//                    self.unsecureAPIToken = try? result.get()
-//                }
-//            }
-//        }
-//        let localUserLoader = LocalUserLoader(store: store, currentDate: Date.init)
-//
-//        return UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)
+        let localUserLoader = LocalUserLoader(store: self.store, currentDate: Date.init)
+        let userLoader = UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)
+        return userLoader
     }
 
     private func makeLocalUserImageDataLoaderWithRemoteFallback() -> UserImageDataLoader {
         let remoteUserImageDataLoader = RemoteUserImageDataLoader(client: httpClient)
         let localUserImageDataLoader = LocalUserImageDataLoader(store: store)
 
-        return UserImageDataLoaderWithFallbackComposite(primary: localUserImageDataLoader, fallback: remoteUserImageDataLoader)
-
+        return UserImageDataLoaderWithFallbackComposite(
+            primary: localUserImageDataLoader,
+            fallback: remoteUserImageDataLoader
+        )
     }
 
 }

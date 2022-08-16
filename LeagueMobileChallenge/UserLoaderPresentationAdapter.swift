@@ -52,7 +52,6 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
     }
 
     func didCancelUserRequest() {
-        
     }
 
     func didRequestUserImage() {
@@ -62,7 +61,4 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
     func didCancelUserImageRequest() {
 
     }
-
-
-
 }

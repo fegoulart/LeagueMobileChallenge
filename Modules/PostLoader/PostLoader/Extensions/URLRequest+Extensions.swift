@@ -7,6 +7,7 @@
 
 extension URLSession {
 
+    // swiftlint:disable:next large_tuple
     func syncRequest(with url: URL) -> (Data?, URLResponse?, Error?) {
         var data: Data?
         var response: URLResponse?
@@ -26,6 +27,7 @@ extension URLSession {
         return (data, response, error)
     }
 
+    // swiftlint:disable:next large_tuple
     func syncRequest(with request: URLRequest) -> (Data?, URLResponse?, Error?) {
         var data: Data?
         var response: URLResponse?

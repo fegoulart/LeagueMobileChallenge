@@ -44,6 +44,7 @@ public final class PostUIComposer {
     ) -> PostViewController {
         let bundle = Bundle(for: PostViewController.self)
         let storyboard = UIStoryboard(name: "Post", bundle: bundle)
+        // swiftlint:disable:next force_cast
         let feedController = storyboard.instantiateInitialViewController() as! PostViewController
         feedController.delegate = delegate
         feedController.title = title

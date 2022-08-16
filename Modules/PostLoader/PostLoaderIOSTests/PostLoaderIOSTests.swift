@@ -8,8 +8,4 @@
 import XCTest
 @testable import PostLoaderIOS
 
-class PostLoaderIOSTests: XCTestCase {
-
-    
-
-}
+class PostLoaderIOSTests: XCTestCase { }
