@@ -75,7 +75,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             guard let self = self else { return ""}
             return self.remoteUserSessionTokenLoader.load() ?? ""
         }
-        return remotePostLoader
+        return MainQueueDispatchDecorator(decoratee: remotePostLoader)
     }
 
     private func makeLocalUserLoaderWithRemoteFallback() -> UserLoader {
@@ -86,17 +86,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         let localUserLoader = LocalUserLoader(store: self.store, currentDate: Date.init)
         let userLoader = UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)
-        return userLoader
+        return MainQueueDispatchDecorator(decoratee: userLoader)
     }
 
     private func makeLocalUserImageDataLoaderWithRemoteFallback() -> UserImageDataLoader {
         let remoteUserImageDataLoader = RemoteUserImageDataLoader(client: httpClient)
         let localUserImageDataLoader = LocalUserImageDataLoader(store: store)
 
-        return UserImageDataLoaderWithFallbackComposite(
+        return MainQueueDispatchDecorator(decoratee: UserImageDataLoaderWithFallbackComposite(
             primary: localUserImageDataLoader,
             fallback: remoteUserImageDataLoader
-        )
+        ))
     }
 
 }

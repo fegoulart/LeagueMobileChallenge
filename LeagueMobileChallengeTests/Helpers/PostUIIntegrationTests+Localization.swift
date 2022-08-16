@@ -12,7 +12,7 @@ import PostLoader
 
 extension PostUIIntegrationTests {
 	func localized(_ key: String, file: StaticString = #file, line: UInt = #line) -> String {
-		let table = "Feed"
+		let table = "Post"
 		let bundle = Bundle(for: PostFeedPresenter.self)
 		let value = bundle.localizedString(forKey: key, value: nil, table: table)
 		if value == key {

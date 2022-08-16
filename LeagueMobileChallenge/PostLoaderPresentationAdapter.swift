@@ -13,15 +13,14 @@ import PostLoaderIOS
 final class PostFeedLoaderPresentationAdapter: PostViewControllerDelegate {
     private let postLoader: PostLoader
     var presenter: PostFeedPresenter?
-
+    
     init(postLoader: PostLoader) {
         self.postLoader = postLoader
     }
-
+    
     func didRequestPostRefresh() {
         presenter?.didStartLoadingPostFeed()
-
-        postLoader.load { [weak self] result in
+        self.postLoader.load { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let posts):
@@ -29,8 +28,6 @@ final class PostFeedLoaderPresentationAdapter: PostViewControllerDelegate {
             case .failure(let error):
                 self.presenter?.didFinishLoadingFeed(with: error)
             }
-
         }
     }
-
 }

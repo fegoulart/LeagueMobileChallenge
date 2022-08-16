@@ -17,7 +17,7 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
     private let userLoader: UserLoader
     private var imageLoaderTask: UserImageDataLoaderTask?
     private var userLoaderTask: UserLoaderTask?
-
+    
     var presenter: PostPresenter<View, Image>?
 
     init(
@@ -37,14 +37,30 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
             return
         }
         let myPost = model
-        userLoaderTask = userLoader.load(userId: userId) { [weak self, myPost] result in
+        self.userLoaderTask = self.userLoader.load(userId: userId) { [weak self, myPost] result in
             switch result {
             case .success(let user):
+
                 guard let updatedUser: User = user else {
                     self?.presenter?.didFinishLoadingUser(with: RemoteUserLoader.Error.invalidData, for: myPost)
                     return
                 }
                 self?.presenter?.didFinishLoadingUser(for: myPost, for: updatedUser)
+                guard let imageUrl = updatedUser.imageUrl else {
+                    return
+                }
+                self?.presenter?.didStartLoadingImageData(for: myPost, user: updatedUser)
+                self?.userImageLoader.loadUserImageData(
+                    url: imageUrl,
+                    userId: updatedUser.id
+                ) { [weak self] result in
+                    switch result {
+                    case .success(let data):
+                        self?.presenter?.didFinishLoadingImageData(with: data, for: myPost, user: updatedUser)
+                    case .failure(let error):
+                        self?.presenter?.didFinishLoadingImageData(with: error, for: myPost, for: updatedUser)
+                    }
+                }
             case .failure(let error):
                 self?.presenter?.didFinishLoadingUser(with: error, for: myPost)
             }
@@ -52,13 +68,6 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
     }
 
     func didCancelUserRequest() {
-    }
-
-    func didRequestUserImage() {
-
-    }
-
-    func didCancelUserImageRequest() {
-
+        userLoaderTask?.cancel()
     }
 }
