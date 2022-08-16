@@ -44,7 +44,7 @@ extension PostViewController {
 		dataSource?.tableView?(tableView, cancelPrefetchingForRowsAt: [index])
 	}
 
-	func renderedPostData(at index: Int) -> Data? {
+	func renderedUserImageData(at index: Int) -> Data? {
 		return simulatePostViewVisible(at: index)?.renderedImage
 	}
 

@@ -11,8 +11,8 @@ import PostLoader
 
 class InMemoryUserStore {
 
-    private var userCache: [Int: LocalUser] = [:]
-    private var userImageCache: [Int: Data?] = [:]
+    private(set) var userCache: [Int: LocalUser] = [:]
+    private(set) var userImageCache: [Int: Data?] = [:]
 
     private init(userCache: [Int: LocalUser] = [:], userImageCache: [Int: Data?] = [:]) {
         self.userCache = userCache

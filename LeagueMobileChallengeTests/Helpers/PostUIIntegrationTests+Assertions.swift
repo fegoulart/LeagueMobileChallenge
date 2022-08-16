@@ -65,13 +65,5 @@ extension PostUIIntegrationTests {
             file: file,
             line: line
         )
-
-        XCTAssertEqual(
-            cell.userNameText,
-            post.userName,
-            "Expected title text to be \(String(describing: post.userName)) for post view at index (\(index))",
-            file: file,
-            line: line
-        )
     }
 }

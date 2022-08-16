@@ -13,11 +13,11 @@ import PostLoaderIOS
 final class PostFeedLoaderPresentationAdapter: PostViewControllerDelegate {
     private let postLoader: PostLoader
     var presenter: PostFeedPresenter?
-    
+
     init(postLoader: PostLoader) {
         self.postLoader = postLoader
     }
-    
+
     func didRequestPostRefresh() {
         presenter?.didStartLoadingPostFeed()
         self.postLoader.load { [weak self] result in

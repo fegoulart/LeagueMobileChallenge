@@ -17,7 +17,7 @@ final class UserLoaderPresentationAdapter<View: PostView, Image>: PostCellContro
     private let userLoader: UserLoader
     private var imageLoaderTask: UserImageDataLoaderTask?
     private var userLoaderTask: UserLoaderTask?
-    
+
     var presenter: PostPresenter<View, Image>?
 
     init(
