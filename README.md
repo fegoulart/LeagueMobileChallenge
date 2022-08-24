@@ -4,6 +4,7 @@
 * [Clean Architecture Based](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) 
 * UI pattern: MVP with Adapter conforming to ViewDelegate + MVC 
 * Modular Architecture Design: Separate module (PostLoader) responsible for both Remote and Local Repository that can be tested without simulator + iOS specific target
+* [Architectural diagrams](https://drive.google.com/file/d/1RiLrma3DdoF-Fk5_QEKeVhMagSQe5mq9/view?usp=sharing)
 
 ### MVP with Adapter conforming to ViewDelegate
 * View delegates messages via a protocol
