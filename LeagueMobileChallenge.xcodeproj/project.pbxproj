@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6C55188028B59CD0004DBC6E /* UserLoaderCacheDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C55187F28B59CD0004DBC6E /* UserLoaderCacheDecorator.swift */; };
+		6C55188228B59F4B004DBC6E /* UserImageDataLoaderCacheDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C55188128B59F4B004DBC6E /* UserImageDataLoaderCacheDecorator.swift */; };
 		6CC3DEEC28AAB76800A19EE5 /* PostLoader.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CC3DEEA28AAB76800A19EE5 /* PostLoader.framework */; };
 		6CC3DEED28AAB76800A19EE5 /* PostLoader.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6CC3DEEA28AAB76800A19EE5 /* PostLoader.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6CC3DEEE28AAB76800A19EE5 /* PostLoaderIOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CC3DEEB28AAB76800A19EE5 /* PostLoaderIOS.framework */; };
@@ -68,6 +70,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6C55187F28B59CD0004DBC6E /* UserLoaderCacheDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLoaderCacheDecorator.swift; sourceTree = "<group>"; };
+		6C55188128B59F4B004DBC6E /* UserImageDataLoaderCacheDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserImageDataLoaderCacheDecorator.swift; sourceTree = "<group>"; };
 		6CC3DEEA28AAB76800A19EE5 /* PostLoader.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = PostLoader.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6CC3DEEB28AAB76800A19EE5 /* PostLoaderIOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = PostLoaderIOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6CC3DEF128AAB7C400A19EE5 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -198,6 +202,8 @@
 				6CC3DEFC28AAC9AD00A19EE5 /* PostFeedViewAdapter.swift */,
 				6CC3DEFE28AACAC200A19EE5 /* UserLoaderPresentationAdapter.swift */,
 				6CC3DF0028AAE3CC00A19EE5 /* WeakRefVirtualProxy.swift */,
+				6C55187F28B59CD0004DBC6E /* UserLoaderCacheDecorator.swift */,
+				6C55188128B59F4B004DBC6E /* UserImageDataLoaderCacheDecorator.swift */,
 			);
 			path = LeagueMobileChallenge;
 			sourceTree = "<group>";
@@ -337,6 +343,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C55188228B59F4B004DBC6E /* UserImageDataLoaderCacheDecorator.swift in Sources */,
 				6CC3DEFD28AAC9AD00A19EE5 /* PostFeedViewAdapter.swift in Sources */,
 				B6AC694F21E6578D0094A9B1 /* AppDelegate.swift in Sources */,
 				6CC3DEF228AAB7C400A19EE5 /* SceneDelegate.swift in Sources */,
@@ -347,6 +354,7 @@
 				6CC3DEF728AAC07D00A19EE5 /* UserImageDataLaoderWithFallbackComposite.swift in Sources */,
 				6CC3DF0128AAE3CC00A19EE5 /* WeakRefVirtualProxy.swift in Sources */,
 				6CC3DEFF28AACAC200A19EE5 /* UserLoaderPresentationAdapter.swift in Sources */,
+				6C55188028B59CD0004DBC6E /* UserLoaderCacheDecorator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

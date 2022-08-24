@@ -85,7 +85,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return self.remoteUserSessionTokenLoader.load() ?? ""
         }
         let localUserLoader = LocalUserLoader(store: self.store, currentDate: Date.init)
-        let userLoader = UserLoaderWithFallbackComposite(primary: localUserLoader, fallback: remoteUserLoader)
+        let userLoader = UserLoaderWithFallbackComposite(
+            primary: localUserLoader,
+            fallback: UserLoaderCacheDecorator(
+                decoratee: remoteUserLoader,
+                cache: localUserLoader)
+        )
         return MainQueueDispatchDecorator(decoratee: userLoader)
     }
 
